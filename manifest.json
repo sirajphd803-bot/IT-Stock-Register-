@@ -1,6 +1,6 @@
 {
-  "name": "Marks Register App",
-  "short_name": "MarksApp",
+  "name": "IT Stock Register",
+  "short_name": "IT LAB",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F4F6F9",
