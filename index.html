@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School IT Stock Register</title>
+    <!-- jsPDF Library for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f1f5f9; padding: 12px; color: #1e293b; }
+        
+        .header { background: #1e3a8a; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px; }
+        .header h1 { font-size: 18px; font-weight: bold; }
+        .header p { font-size: 11px; opacity: 0.9; margin-top: 4px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: white; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .stat-card:hover, .stat-card.active-card { border-color: #2563eb; background: #eff6ff; }
+        .stat-card h3 { font-size: 22px; color: #1e3a8a; font-weight: bold; }
+        .stat-card p { font-size: 11px; color: #64748b; font-weight: 600; margin-top: 2px; }
+
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        .card h2 { font-size: 14px; margin-bottom: 12px; color: #1e40af; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 12px; }
+
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+        button { flex: 1; background: #2563eb; color: white; border: none; padding: 9px; border-radius: 5px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        button.btn-danger { background: #dc2626; }
+        button.btn-success { background: #16a34a; }
+        button.btn-pdf { background: #d97706; }
+
+        .tab-btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; width: 100%; }
+        .tab-btn { flex: 1; min-width: 65px; background: #e2e8f0; color: #475569; padding: 8px 4px; border-radius: 5px; border: none; font-weight: bold; font-size: 11px; text-align: center; cursor: pointer; }
+        .tab-btn.active { background: #1e3a8a; color: white; }
+
+        .action-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+        .search-box { flex: 1; padding: 8px; border: 1px solid #94a3b8; border-radius: 5px; font-size: 12px; }
+
+        .table-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; }
+        th, td { border: 1px solid #e2e8f0; padding: 7px; text-align: left; }
+        th { background-color: #1e293b; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: white; display: inline-block; }
+        .badge-lab { background-color: #16a34a; }
+        .badge-class { background-color: #d97706; }
+        .badge-person { background-color: #2563eb; }
+        .badge-kite { background-color: #9333ea; }
+        
+        .edit-btn { background-color: #2563eb; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+        .edit-btn:hover { background-color: #1d4ed8; }
+
+        .acc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .acc-card { background: #f8fafc; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; text-align: center; }
+        .acc-card input { text-align: center; font-weight: bold; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🏫 IT Stock Register (2026-2027)</h1>
+        <p>Laptop, Projector & Accessories Tracker</p>
+    </div>
+
+    <!-- Summary Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card" id="cardLaptop" onclick="filterTab('Laptop')">
+            <h3 id="statLaptops">0</h3>
+            <p>Total Laptops</p>
+        </div>
+        <div class="stat-card" id="cardProjector" onclick="filterTab('Projector')">
+            <h3 id="statProjectors">0</h3>
+            <p>Total Projectors</p>
+        </div>
+        <div class="stat-card" id="cardComplaint" onclick="filterTab('COMPLAINT')">
+            <h3 id="statComplaints">0</h3>
+            <p>Complaints</p>
+        </div>
+        <div class="stat-card" id="cardIssued" onclick="filterTab('ISSUED_ALL')">
+            <h3 id="statIssued">0</h3>
+            <p>Issued Items</p>
+        </div>
+    </div>
+
+    <!-- Accessory Count Section -->
+    <div class="card">
+        <h2>🖱️ Accessories Count</h2>
+        <div class="acc-grid">
+            <div class="acc-card">
+                <label>Mouse</label>
+                <input type="number" id="accMouse" value="28" onchange="saveAcc()">
+            </div>
+            <div class="acc-card">
+                <label>Chargers</label>
+                <input type="number" id="accCharger" value="37" onchange="saveAcc()">
+            </div>
+            <div class="acc-card">
+                <label>Robotics Kit</label>
+                <input type="number" id="accRobotics" value="5" onchange="saveAcc()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="card">
+        <h2>🔄 Issue / Update Item</h2>
+        <form id="itemForm">
+            <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Item Type</label>
+                    <select id="type">
+                        <option value="Laptop">Laptop</option>
+                        <option value="Projector">Projector</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Item Code</label>
+                    <input type="text" id="itemCode" required placeholder="LAP-1">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Brand / Make</label>
+                    <input type="text" id="brand" placeholder="Acer / BenQ / HP">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Serial / Product No</label>
+                    <input type="text" id="serialNo" placeholder="PDRCH...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Issued To (LAB / Class / Person / KITE Service)</label>
+                <input type="text" id="issuedTo" placeholder="LAB or Class 10A or Sharmila 15-09-2026 or KITE Service" required>
+            </div>
+
+            <div class="form-group">
+                <label>Complaint (If Any)</label>
+                <input type="text" id="complaint" placeholder="Display broken, Battery issue...">
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn-success">Save / Update</button>
+                <button type="button" class="btn-danger" onclick="resetForm()">Reset</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Register Table -->
+    <div class="card">
+        <div class="tab-btn-group">
+            <button class="tab-btn active" id="tabAll" onclick="filterTab('ALL')">All</button>
+            <button class="tab-btn" id="tabLaptop" onclick="filterTab('Laptop')">Laptops</button>
+            <button class="tab-btn" id="tabProjector" onclick="filterTab('Projector')">Projectors</button>
+            <button class="tab-btn" id="tabLab" onclick="filterTab('FILTER_LAB')">LAB</button>
+            <button class="tab-btn" id="tabClasses" onclick="filterTab('FILTER_CLASS')">Classes</button>
+            <button class="tab-btn" id="tabPersons" onclick="filterTab('FILTER_PERSON')">Persons</button>
+            <button class="tab-btn" id="tabKite" onclick="filterTab('FILTER_KITE')">KITE Repair</button>
+            <button class="tab-btn" id="tabComplaints" onclick="filterTab('COMPLAINT')">Complaints</button>
+        </div>
+
+        <div class="action-bar">
+            <input type="text" id="searchBox" class="search-box" placeholder="Search Code, Brand, Issued To..." onkeyup="renderTable()">
+            <button type="button" class="btn-pdf" onclick="exportToPDF()" style="flex:0 0 110px;">📄 Export PDF</button>
+        </div>
+
+        <div class="table-container">
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Type & Brand</th>
+                        <th>Serial No</th>
+                        <th>Issued To</th>
+                        <th>Complaint</th>
+                        <th style="text-align: center;">Edit</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <!-- Dynamic Data Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const initialData = [
+          {itemCode: "LAP-1", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212005109", complaint: "N' Key Missed", issuedTo: "LAB"},
+            {itemCode: "LAP-2", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI13142212006612", complaint: "Not turning on", issuedTo: "LAB"},
+            {itemCode: "LAP-3", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212004862", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-4", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212001357", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-5", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212001224", complaint: "", issuedTo: "Sharmila 15-09-2026"},
+            {itemCode: "LAP-6", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI314221200519", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-7", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212002732", complaint: "Display damaged", issuedTo: "KITE Service"},
+            {itemCode: "LAP-8", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212006549", complaint: "Not turning on", issuedTo: "LAB"},
+            {itemCode: "LAP-9", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212004941", complaint: "Not turning on", issuedTo: "LAB"},
+            {itemCode: "LAP-10", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212005149", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-11", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212006584", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-12", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212001520", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-13", type: "Laptop", brand: "Smaash", serialNo: "NEGWCI3142212004734", complaint: "PrtSc Key Missed", issuedTo: "LAB"},
+            {itemCode: "LAP-14", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880400AD8CL10", complaint: "Hinge Broken not working", issuedTo: "LAB"},
+            {itemCode: "LAP-15", type: "Laptop", brand: "Acer", serialNo: "UN431SI028804009C2CL10", complaint: "Display Broken", issuedTo: "KITE Service"},
+            {itemCode: "LAP-16", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880400B55CL10", complaint: "Reinstalled", issuedTo: "LAB"},
+            {itemCode: "LAP-17", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880400B3BCL10", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-18", type: "Laptop", brand: "Acer", serialNo: "804002803CL", complaint: "CMOS replaced", issuedTo: "LAB"},
+            {itemCode: "LAP-19", type: "Laptop", brand: "Acer", serialNo: "804002899CL", complaint: "Reinstalled", issuedTo: "LAB"},
+            {itemCode: "LAP-20", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880901CFDCL10", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-21", type: "Laptop", brand: "Acer", serialNo: "NXEFMSI003951005940X10", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-22", type: "Laptop", brand: "Acer", serialNo: "UN431SI0288080022BCL10", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-23", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880800404CL10", complaint: "Hinge Broken", issuedTo: "LAB"},
+            {itemCode: "LAP-24", type: "Laptop", brand: "Acer", serialNo: "804002488CL", complaint: "Reinstalled", issuedTo: "LAB"},
+            {itemCode: "LAP-25", type: "Laptop", brand: "Acer", serialNo: "804002795CL", complaint: "Reinstalled_ Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-26", type: "Laptop", brand: "Acer", serialNo: "UN431SI028808003EECL10", complaint: "", issuedTo: "Class 9A Teacher"},
+            {itemCode: "LAP-27", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880800264FCL10", complaint: "Software can't install", issuedTo: "LAB"},
+            {itemCode: "LAP-28", type: "Laptop", brand: "Acer", serialNo: "804002773CL", complaint: "Reinstalled", issuedTo: "LAB"},
+            {itemCode: "LAP-29", type: "Laptop", brand: "Acer", serialNo: "UN431SI028808003EACL10", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-30", type: "Laptop", brand: "Acer", serialNo: "804002490CL", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-31", type: "Laptop", brand: "Acer", serialNo: "804002902CL", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-32", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880400B54CL10", complaint: "", issuedTo: "KITE Service"},
+            {itemCode: "LAP-33", type: "Laptop", brand: "Acer", serialNo: "UN431SI028004009B9CL10", complaint: "Display damaged(8B)", issuedTo: "KITE Service"},
+            {itemCode: "LAP-34", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880901CD1CL10", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-35", type: "Laptop", brand: "Acer", serialNo: "UN431SI028804009C1CL10", complaint: "CMOS replaced & Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-36", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880800343CL10", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-37", type: "Laptop", brand: "Acer", serialNo: "804003165CL", complaint: "Hinge broken", issuedTo: "LAB"},
+            {itemCode: "LAP-38", type: "Laptop", brand: "Acer", serialNo: "804002703CL", complaint: "Reinstalled", issuedTo: "LAB"},
+            {itemCode: "LAP-39", type: "Laptop", brand: "Acer", serialNo: "UN431SI02880400B3ACL10", complaint: "Display Broken", issuedTo: "LAB"},
+            {itemCode: "LAP-40", type: "Laptop", brand: "HP", serialNo: "5CGI32235W", complaint: "", issuedTo: "Class 10A Teacher"},
+            {itemCode: "LAP-41", type: "Laptop", brand: "HP", serialNo: "5CGI322TIT", complaint: "", issuedTo: "Class 10D Teacher"},
+            {itemCode: "LAP-42", type: "Laptop", brand: "HP", serialNo: "5CGI38BV22", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-43", type: "Laptop", brand: "HP", serialNo: "5CG1321380", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-44", type: "Laptop", brand: "HP", serialNo: "5CG1320SP3", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-45", type: "Laptop", brand: "HP", serialNo: "5CG13210N9", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-46", type: "Laptop", brand: "HP", serialNo: "5CG1320Y2L", complaint: "Keyboard issue", issuedTo: "LAB"},
+            {itemCode: "LAP-47", type: "Laptop", brand: "HP", serialNo: "5CG1325WQF", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-48", type: "Laptop", brand: "HP", serialNo: "5CG13211WL", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-49", type: "Laptop", brand: "HP", serialNo: "5CG1325WR9", complaint: "Battery issue", issuedTo: "LAB"},
+            {itemCode: "LAP-50", type: "Laptop", brand: "HP", serialNo: "5CG1320X4C", complaint: "", issuedTo: "Class 9B Teacher"},
+            {itemCode: "LAP-51", type: "Laptop", brand: "HP", serialNo: "5CG1320Y23", complaint: "", issuedTo: "LAB"},
+            {itemCode: "LAP-52", type: "Laptop", brand: "LENOVO", serialNo: "MP23M6Z0", complaint: "", issuedTo: "Class 10B Teacher"},
+            {itemCode: "LAP-53", type: "Laptop", brand: "LENOVO", serialNo: "MP23LZ3K", complaint: "Display Broken", issuedTo: "Staff Room"},
+      
+            // PROJECTORS
+          {itemCode: "PROJ-1", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH02926000", complaint: "", issuedTo: "Class 8C"},
+            {itemCode: "PROJ-2", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDTCH01506000", complaint: "", issuedTo: "Class 9C"},
+            {itemCode: "PROJ-3", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDTCH01564000", complaint: "", issuedTo: "Sanskrit Teacher"},
+            {itemCode: "PROJ-4", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH04936000", complaint: "", issuedTo: "Class 8F"},
+            {itemCode: "PROJ-5", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH02879000", complaint: "", issuedTo: "Urdu Teacher"},
+            {itemCode: "PROJ-6", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDNCH02202000", complaint: "", issuedTo: "Class 10C"},
+            {itemCode: "PROJ-7", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH02909000", complaint: "", issuedTo: "Class 10B"},
+            {itemCode: "PROJ-8", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH05000000", complaint: "", issuedTo: "Class 9A"},
+            {itemCode: "PROJ-9", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH03388000", complaint: "", issuedTo: "Class 9B"},
+            {itemCode: "PROJ-10", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDTCH01548000", complaint: "LAMP COMPLAINT", issuedTo: "LAB"},
+            {itemCode: "PROJ-11", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH02872000", complaint: "", issuedTo: "Class 8B"},
+            {itemCode: "PROJ-12", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH03344000", complaint: "", issuedTo: "Class 8E"},
+            {itemCode: "PROJ-13", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDTCH01524000", complaint: "Standby issue", issuedTo: "LAB"},
+            {itemCode: "PROJ-14", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH04979000", complaint: "", issuedTo: "Class 10A"},
+            {itemCode: "PROJ-15", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH03384000", complaint: "", issuedTo: "Class 9D"},
+            {itemCode: "PROJ-16", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDTCH01547000", complaint: "", issuedTo: "Class 8D"},
+            {itemCode: "PROJ-17", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDRCH03365000", complaint: "", issuedTo: "Arabic Teacher"},
+            {itemCode: "PROJ-18", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDVCH02574000", complaint: "", issuedTo: "Class 10D"},
+            {itemCode: "PROJ-19", type: "Projector", brand: "BENQ (MX 528)", serialNo: "PDWAR01870000", complaint: "", issuedTo: "Class 8A"}
+        ];
+      
+        let stockRegister = JSON.parse(localStorage.getItem('schoolStockData')) || initialData;
+        let currentFilter = 'ALL';
+
+        window.onload = function() {
+            const acc = JSON.parse(localStorage.getItem('schoolAccData')) || {mouse: 28, charger: 37, robotics: 5};
+            document.getElementById('accMouse').value = acc.mouse;
+            document.getElementById('accCharger').value = acc.charger;
+            document.getElementById('accRobotics').value = acc.robotics;
+        };
+
+        function saveAcc() {
+            const accData = {
+                mouse: document.getElementById('accMouse').value,
+                charger: document.getElementById('accCharger').value,
+                robotics: document.getElementById('accRobotics').value
+            };
+            localStorage.setItem('schoolAccData', JSON.stringify(accData));
+        }
+
+        const itemForm = document.getElementById('itemForm');
+
+        itemForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const itemCode = document.getElementById('itemCode').value.trim();
+            const type = document.getElementById('type').value;
+            const brand = document.getElementById('brand').value.trim();
+            const serialNo = document.getElementById('serialNo').value.trim();
+            const issuedTo = document.getElementById('issuedTo').value.trim() || 'LAB';
+            const complaint = document.getElementById('complaint').value.trim();
+
+            const index = stockRegister.findIndex(i => i.itemCode.toLowerCase() === itemCode.toLowerCase());
+
+            if (index > -1) {
+                stockRegister[index] = { itemCode, type, brand, serialNo, issuedTo, complaint };
+            } else {
+                stockRegister.push({ itemCode, type, brand, serialNo, issuedTo, complaint });
+            }
+
+            localStorage.setItem('schoolStockData', JSON.stringify(stockRegister));
+            resetForm();
+            renderTable();
+            alert('Data saved successfully!');
+        });
+
+        // Helper to check issue type
+        function getIssueType(target) {
+            const val = target.toUpperCase();
+            if (val.includes('KITE') || val.includes('REPAIR') || val.includes('SERVICE')) return 'KITE';
+            if (val === 'LAB' || val === '-') return 'LAB';
+            if (val.includes('CLASS') || val.includes('ROOM') || /\b8[A-F]\b|\b9[A-D]\b|\b10[A-D]\b/.test(val)) return 'CLASS';
+            return 'PERSON';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('stockTableBody');
+            const search = document.getElementById('searchBox').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            let laptopsCount = 0, projectorsCount = 0, complaintCount = 0, issuedCount = 0;
+
+            stockRegister.forEach(item => {
+                if (item.type === 'Laptop') laptopsCount++;
+                if (item.type === 'Projector') projectorsCount++;
+                if (item.complaint && item.complaint !== '') complaintCount++;
+                if (getIssueType(item.issuedTo) !== 'LAB') issuedCount++;
+            });
+
+            document.getElementById('statLaptops').innerText = laptopsCount;
+            document.getElementById('statProjectors').innerText = projectorsCount;
+            document.getElementById('statComplaints').innerText = complaintCount;
+            document.getElementById('statIssued').innerText = issuedCount;
+
+            const filtered = stockRegister.filter(item => {
+                const issueCategory = getIssueType(item.issuedTo);
+                let matchesTab = false;
+
+                if (currentFilter === 'ALL') matchesTab = true;
+                else if (currentFilter === 'COMPLAINT') matchesTab = item.complaint && item.complaint !== '';
+                else if (currentFilter === 'ISSUED_ALL') matchesTab = issueCategory !== 'LAB';
+                else if (currentFilter === 'FILTER_LAB') matchesTab = issueCategory === 'LAB';
+                else if (currentFilter === 'FILTER_CLASS') matchesTab = issueCategory === 'CLASS';
+                else if (currentFilter === 'FILTER_PERSON') matchesTab = issueCategory === 'PERSON';
+                else if (currentFilter === 'FILTER_KITE') matchesTab = issueCategory === 'KITE';
+                else matchesTab = item.type === currentFilter;
+                
+                const matchesSearch = item.itemCode.toLowerCase().includes(search) ||
+                                      item.brand.toLowerCase().includes(search) ||
+                                      item.serialNo.toLowerCase().includes(search) ||
+                                      item.issuedTo.toLowerCase().includes(search) ||
+                                      (item.complaint && item.complaint.toLowerCase().includes(search));
+
+                return matchesTab && matchesSearch;
+            });
+
+            filtered.forEach(item => {
+                const cat = getIssueType(item.issuedTo);
+                let badgeClass = 'badge-lab';
+                if (cat === 'CLASS') badgeClass = 'badge-class';
+                else if (cat === 'PERSON') badgeClass = 'badge-person';
+                else if (cat === 'KITE') badgeClass = 'badge-kite';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${item.itemCode}</b></td>
+                    <td><b>${item.type}</b><br><span style="color:#64748b">${item.brand}</span></td>
+                    <td style="font-family:monospace;">${item.serialNo}</td>
+                    <td><span class="badge ${badgeClass}">${item.issuedTo}</span></td>
+                    <td style="color:#dc2626; font-weight:600;">${item.complaint || '-'}</td>
+                    <td style="text-align: center;">
+                        <button class="edit-btn" onclick="editItem('${item.itemCode}')">✏️ Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTab(tab) {
+            currentFilter = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active-card'));
+
+            if(tab === 'ALL') document.getElementById('tabAll').classList.add('active');
+            if(tab === 'Laptop') {
+                document.getElementById('tabLaptop').classList.add('active');
+                document.getElementById('cardLaptop').classList.add('active-card');
+            }
+            if(tab === 'Projector') {
+                document.getElementById('tabProjector').classList.add('active');
+                document.getElementById('cardProjector').classList.add('active-card');
+            }
+        if(tab === 'FILTER_LAB') document.getElementById('tabLab').classList.add('active');
+            if(tab === 'FILTER_CLASS') document.getElementById('tabClasses').classList.add('active');
+            if(tab === 'FILTER_PERSON') document.getElementById('tabPersons').classList.add('active');
+            if(tab === 'FILTER_KITE') document.getElementById('tabKite').classList.add('active');
+            if(tab === 'COMPLAINT') {
+                document.getElementById('tabComplaints').classList.add('active');
+                document.getElementById('cardComplaint').classList.add('active-card');
+            }
+            if(tab === 'ISSUED_ALL') {
+                document.getElementById('cardIssued').classList.add('active-card');
+            }
+
+            renderTable();
+            document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function editItem(code) {
+            const item = stockRegister.find(i => i.itemCode === code);
+            if (item) {
+                document.getElementById('itemCode').value = item.itemCode;
+                document.getElementById('type').value = item.type;
+                document.getElementById('brand').value = item.brand;
+                document.getElementById('serialNo').value = item.serialNo;
+                document.getElementById('issuedTo').value = item.issuedTo;
+                document.getElementById('complaint').value = item.complaint;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function resetForm() {
+            itemForm.reset();
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text("School IT Stock Register", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Filter: ${currentFilter} | Date: ${new Date().toLocaleDateString()}`, 14, 22);
+
+            const table = document.getElementById("stockTable");
+            
+            doc.autoTable({
+                html: table,
+                startY: 28,
+                theme: 'grid',
+                headStyles: { fillColor: [30, 41, 59] },
+                columns: [
+                    { header: 'Code', dataKey: 'code' },
+                    { header: 'Type & Brand', dataKey: 'type' },
+                    { header: 'Serial No', dataKey: 'serial' },
+                    { header: 'Issued To', dataKey: 'issued' },
+                    { header: 'Complaint', dataKey: 'complaint' }
+                ],
+                didParseCell: function(data) {
+                    if (data.column.index === 5) { 
+                        data.cell.text = ''; // PDF-ൽ നിന്ന് Edit ബട്ടൺ ഒഴിവാക്കാൻ
+                    }
+                }
+            });
+
+            doc.save(`IT_Stock_Register_${currentFilter}.pdf`);
+        }
+
+        // Initial Load
+        renderTable();
+    </script>
+</body>
+</html>
